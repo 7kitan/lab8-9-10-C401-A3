@@ -227,19 +227,19 @@ def transform_query(query: str, strategy: str = "expansion") -> List[str]:
     from index import call_openai_llm # Hoặc dùng helper call_llm đã có trong file
 
     if strategy == "expansion":
-        prompt = f"""Bạn là một chuyên gia về IT Helpdesk. Hãy liệt kê 2-3 cách diễn đạt khác hoặc các từ khóa liên quan bằng tiếng Việt cho câu hỏi sau:
-Câu hỏi: '{query}'
-Yêu cầu: Chỉ trả về mảng JSON các chuỗi ký tự. Ví dụ: ["câu 1", "câu 2"]"""
+        prompt = f"""You are an IT Helpdesk expert. Please provide 2-3 alternative phrasings or related search terms in Vietnamese for the following query:
+Query: '{query}'
+Requirements: Output ONLY a JSON array of strings. Example: ["sentence 1", "sentence 2"]"""
     
     elif strategy == "decomposition":
-        prompt = f"""Hãy chia nhỏ câu hỏi phức tạp sau thành 2-3 câu hỏi đơn giản hơn để tìm kiếm trong cơ sở dữ liệu:
-Câu hỏi: '{query}'
-Yêu cầu: Chỉ trả về mảng JSON các chuỗi ký tự. Ví dụ: ["câu 1", "câu 2"]"""
+        prompt = f"""Break down this complex IT Helpdesk query into 2-3 simpler sub-queries in Vietnamese to improve database retrieval:
+Query: '{query}'
+Requirements: Output ONLY a JSON array of strings. Example: ["query 1", "query 2"]"""
     
     elif strategy == "hyde":
-        prompt = f"""Hãy viết một đoạn văn ngắn (2-3 câu) trả lời giả định cho câu hỏi sau để dùng làm dữ liệu tìm kiếm:
-Câu hỏi: '{query}'
-Trả lời giả định:"""
+        prompt = f"""Please write a short (2-3 sentences) hypothetical answer in Vietnamese for the following question to be used as a search document:
+Question: '{query}'
+Hypothetical Answer:"""
         # Với HyDE, prompt trả về text, không phải JSON
         try:
             hyde_doc = call_llm(prompt)
