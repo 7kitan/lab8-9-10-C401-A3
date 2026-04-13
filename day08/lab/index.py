@@ -62,7 +62,7 @@ def preprocess_document(raw_text: str, filepath: str) -> Dict[str, Any]:
 
     for line in lines:
         if not header_done:
-            # TODO: Parse metadata từ các dòng "Key: Value"
+            # Kiểm tra xem dòng hiện tại có chứa metadata không
             if line.startswith("Source:"):
                 metadata["source"] = line.replace("Source:", "").strip()
             elif line.startswith("Department:"):
@@ -71,14 +71,17 @@ def preprocess_document(raw_text: str, filepath: str) -> Dict[str, Any]:
                 metadata["effective_date"] = line.replace("Effective Date:", "").strip()
             elif line.startswith("Access:"):
                 metadata["access"] = line.replace("Access:", "").strip()
-            elif line.startswith("===") or (line.strip() == "" and len(content_lines) > 0) or (line.isupper() and ":" not in line):
-                # Gặp section heading hoặc kết thúc header
+            # Dấu hiệu kết thúc header: gặp dòng tiêu đề section (=== ...)
+            elif line.startswith("==="):
                 header_done = True
-                if line.startswith("==="):
-                    content_lines.append(line)
+                content_lines.append(line)
+            # Hoặc gặp dòng trống sau khi đã có nội dung (ví dụ sau tiêu đề file)
+            # Lưu ý: Không dừng ngay khi gặp dòng in hoa đầu tiên vì đó thường là tên file
+            elif line.strip() == "" and len(content_lines) > 0:
+                header_done = True
             else:
-                # Bỏ qua dòng tiêu đề file ở đầu
-                continue
+                # Nếu là dòng chữ bình thường (Title), cứ thu thập vào content nhưng chưa kết thúc header scan
+                content_lines.append(line)
         else:
             content_lines.append(line)
 
