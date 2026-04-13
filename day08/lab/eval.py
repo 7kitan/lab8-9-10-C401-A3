@@ -17,18 +17,19 @@ A/B Rule (từ slide):
   Đổi đồng thời chunking + hybrid + rerank + prompt = không biết biến nào có tác dụng.
 """
 
-import json
 import csv
-from pathlib import Path
-from typing import List, Dict, Any, Optional
+import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from rag_answer import rag_answer
 
 # =============================================================================
 # CẤU HÌNH
 # =============================================================================
 
-TEST_QUESTIONS_PATH = Path(__file__).parent / "data" / "test_questions.json"
+TEST_QUESTIONS_PATH = Path(__file__).parent / "data" / "grading_questions.json"
 RESULTS_DIR = Path(__file__).parent / "results"
 
 # Cấu hình baseline (Sprint 2)
@@ -43,10 +44,10 @@ BASELINE_CONFIG = {
 # Cấu hình variant (Sprint 3 — điều chỉnh theo lựa chọn của nhóm)
 # TODO Sprint 4: Cập nhật VARIANT_CONFIG theo variant nhóm đã implement
 VARIANT_CONFIG = {
-    "retrieval_mode": "hybrid",   # Hoặc "dense" nếu chỉ đổi rerank
+    "retrieval_mode": "hybrid",  # Hoặc "dense" nếu chỉ đổi rerank
     "top_k_search": 10,
     "top_k_select": 3,
-    "use_rerank": True,           # Hoặc False nếu variant là hybrid không rerank
+    "use_rerank": True,  # Hoặc False nếu variant là hybrid không rerank
     "label": "variant_hybrid_rerank",
 }
 
@@ -55,6 +56,7 @@ VARIANT_CONFIG = {
 # SCORING FUNCTIONS
 # 4 metrics từ slide: Faithfulness, Answer Relevance, Context Recall, Completeness
 # =============================================================================
+
 
 def score_faithfulness(
     answer: str,
@@ -69,11 +71,11 @@ def score_faithfulness(
     """
     if not chunks_used or "Lỗi:" in answer:
         return {"score": 1, "notes": "Không có bằng chứng hoặc lỗi pipeline"}
-    
+
     # LLM-as-Judge approach
     from rag_answer import call_llm
-    
-    context = "\n".join([f"[{i+1}] {c['text']}" for i, c in enumerate(chunks_used)])
+
+    context = "\n".join([f"[{i + 1}] {c['text']}" for i, c in enumerate(chunks_used)])
     prompt = f"""Given these retrieved chunks:
 {context}
 
@@ -89,7 +91,8 @@ Output ONLY a JSON object: {{"score": <int>, "reason": "<string>"}}"""
         response = call_llm(prompt)
         # Parse JSON
         import re
-        match = re.search(r'\{.*\}', response, re.DOTALL)
+
+        match = re.search(r"\{.*\}", response, re.DOTALL)
         if match:
             data = json.loads(match.group())
             return {"score": data.get("score"), "notes": data.get("reason")}
@@ -107,7 +110,7 @@ def score_answer_relevance(
     answer: str,
 ) -> Dict[str, Any]:
     from rag_answer import call_llm
-    
+
     prompt = f"""Question: {query}
 Answer: {answer}
 
@@ -119,7 +122,8 @@ Output ONLY a JSON object: {{"score": <int>, "reason": "<string>"}}"""
     try:
         response = call_llm(prompt)
         import re
-        match = re.search(r'\{.*\}', response, re.DOTALL)
+
+        match = re.search(r"\{.*\}", response, re.DOTALL)
         if match:
             data = json.loads(match.group())
             return {"score": data.get("score"), "notes": data.get("reason")}
@@ -146,18 +150,20 @@ def score_context_recall(
         # Câu hỏi không có expected source (ví dụ: "Không đủ dữ liệu" cases)
         return {"score": None, "recall": None, "notes": "No expected sources"}
 
-    retrieved_sources = {
-        c.get("metadata", {}).get("source", "")
-        for c in chunks_used
-    }
+    retrieved_sources = {c.get("metadata", {}).get("source", "") for c in chunks_used}
 
     # TODO: Kiểm tra matching theo partial path (vì source paths có thể khác format)
     found = 0
     missing = []
     for expected in expected_sources:
         # Normalize: lấy tên file và đổi - thành _ để khớp
-        expected_name = expected.split("/")[-1].replace(".pdf", "").replace(".md", "").replace("-", "_")
-        
+        expected_name = (
+            expected.split("/")[-1]
+            .replace(".pdf", "")
+            .replace(".md", "")
+            .replace("-", "_")
+        )
+
         matched = False
         for r in retrieved_sources:
             # Normalize retrieved source path
@@ -165,7 +171,7 @@ def score_context_recall(
             if expected_name.lower() in r_normalized:
                 matched = True
                 break
-        
+
         if matched:
             found += 1
         else:
@@ -178,8 +184,8 @@ def score_context_recall(
         "recall": recall,
         "found": found,
         "missing": missing,
-        "notes": f"Retrieved: {found}/{len(expected_sources)} expected sources" +
-                 (f". Missing: {missing}" if missing else ""),
+        "notes": f"Retrieved: {found}/{len(expected_sources)} expected sources"
+        + (f". Missing: {missing}" if missing else ""),
     }
 
 
@@ -192,7 +198,7 @@ def score_completeness(
         return {"score": 5, "notes": "No expected answer provided"}
 
     from rag_answer import call_llm
-    
+
     prompt = f"""Query: {query}
 Model Answer: {answer}
 Expected Answer: {expected_answer}
@@ -205,7 +211,8 @@ Output ONLY a JSON object: {{"score": <int>, "reason": "<string>"}}"""
     try:
         response = call_llm(prompt)
         import re
-        match = re.search(r'\{.*\}', response, re.DOTALL)
+
+        match = re.search(r"\{.*\}", response, re.DOTALL)
         if match:
             data = json.loads(match.group())
             return {"score": data.get("score"), "notes": data.get("reason")}
@@ -221,6 +228,7 @@ Output ONLY a JSON object: {{"score": <int>, "reason": "<string>"}}"""
 # =============================================================================
 # SCORECARD RUNNER
 # =============================================================================
+
 
 def run_scorecard(
     config: Dict[str, Any],
@@ -249,10 +257,10 @@ def run_scorecard(
     results = []
     label = config.get("label", "unnamed")
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Chạy scorecard: {label}")
     print(f"Config: {config}")
-    print('='*70)
+    print("=" * 70)
 
     for q in test_questions:
         question_id = q["id"]
@@ -310,14 +318,20 @@ def run_scorecard(
 
         if verbose:
             print(f"  Answer: {answer[:100]}...")
-            print(f"  Faithful: {faith['score']} | Relevant: {relevance['score']} | "
-                  f"Recall: {recall['score']} | Complete: {complete['score']}")
+            print(
+                f"  Faithful: {faith['score']} | Relevant: {relevance['score']} | "
+                f"Recall: {recall['score']} | Complete: {complete['score']}"
+            )
 
     # Tính averages (bỏ qua None)
     for metric in ["faithfulness", "relevance", "context_recall", "completeness"]:
         scores = [r[metric] for r in results if r[metric] is not None]
         avg = sum(scores) / len(scores) if scores else None
-        print(f"\nAverage {metric}: {avg:.2f}" if avg else f"\nAverage {metric}: N/A (chưa chấm)")
+        print(
+            f"\nAverage {metric}: {avg:.2f}"
+            if avg
+            else f"\nAverage {metric}: N/A (chưa chấm)"
+        )
 
     return results
 
@@ -325,6 +339,7 @@ def run_scorecard(
 # =============================================================================
 # A/B COMPARISON
 # =============================================================================
+
 
 def compare_ab(
     baseline_results: List[Dict],
@@ -351,9 +366,9 @@ def compare_ab(
     """
     metrics = ["faithfulness", "relevance", "context_recall", "completeness"]
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("A/B Comparison: Baseline vs Variant")
-    print('='*70)
+    print("=" * 70)
     print(f"{'Metric':<20} {'Baseline':>10} {'Variant':>10} {'Delta':>8}")
     print("-" * 55)
 
@@ -372,7 +387,9 @@ def compare_ab(
         print(f"{metric:<20} {b_str:>10} {v_str:>10} {d_str:>8}")
 
     # Per-question comparison
-    print(f"\n{'Câu':<6} {'Baseline F/R/Rc/C':<22} {'Variant F/R/Rc/C':<22} {'Better?':<10}")
+    print(
+        f"\n{'Câu':<6} {'Baseline F/R/Rc/C':<22} {'Variant F/R/Rc/C':<22} {'Better?':<10}"
+    )
     print("-" * 65)
 
     b_by_id = {r["id"]: r for r in baseline_results}
@@ -380,17 +397,17 @@ def compare_ab(
         qid = v_row["id"]
         b_row = b_by_id.get(qid, {})
 
-        b_scores_str = "/".join([
-            str(b_row.get(m, "?")) for m in metrics
-        ])
-        v_scores_str = "/".join([
-            str(v_row.get(m, "?")) for m in metrics
-        ])
+        b_scores_str = "/".join([str(b_row.get(m, "?")) for m in metrics])
+        v_scores_str = "/".join([str(v_row.get(m, "?")) for m in metrics])
 
         # So sánh đơn giản
         b_total = sum(b_row.get(m, 0) or 0 for m in metrics)
         v_total = sum(v_row.get(m, 0) or 0 for m in metrics)
-        better = "Variant" if v_total > b_total else ("Baseline" if b_total > v_total else "Tie")
+        better = (
+            "Variant"
+            if v_total > b_total
+            else ("Baseline" if b_total > v_total else "Tie")
+        )
 
         print(f"{qid:<6} {b_scores_str:<22} {v_scores_str:<22} {better:<10}")
 
@@ -410,6 +427,7 @@ def compare_ab(
 # =============================================================================
 # REPORT GENERATOR
 # =============================================================================
+
 
 def generate_scorecard_summary(results: List[Dict], label: str) -> str:
     """
@@ -442,9 +460,11 @@ Generated: {timestamp}
     md += "|----|----------|----------|----------|--------|----------|-------|\n"
 
     for r in results:
-        md += (f"| {r['id']} | {r['category']} | {r.get('faithfulness', 'N/A')} | "
-               f"{r.get('relevance', 'N/A')} | {r.get('context_recall', 'N/A')} | "
-               f"{r.get('completeness', 'N/A')} | {r.get('faithfulness_notes', '')[:50]} |\n")
+        md += (
+            f"| {r['id']} | {r['category']} | {r.get('faithfulness', 'N/A')} | "
+            f"{r.get('relevance', 'N/A')} | {r.get('context_recall', 'N/A')} | "
+            f"{r.get('completeness', 'N/A')} | {r.get('faithfulness_notes', '')[:50]} |\n"
+        )
 
     return md
 
@@ -503,16 +523,16 @@ if __name__ == "__main__":
             test_questions=test_questions,
             verbose=True,
         )
-        variant_md = generate_scorecard_summary(variant_results, VARIANT_CONFIG["label"])
+        variant_md = generate_scorecard_summary(
+            variant_results, VARIANT_CONFIG["label"]
+        )
         (RESULTS_DIR / "scorecard_variant.md").write_text(variant_md, encoding="utf-8")
         print(f"Scorecard variant lưu tại: {RESULTS_DIR / 'scorecard_variant.md'}")
 
         # --- A/B Comparison ---
         if baseline_results and variant_results:
             compare_ab(
-                baseline_results,
-                variant_results,
-                output_csv="ab_comparison.csv"
+                baseline_results, variant_results, output_csv="ab_comparison.csv"
             )
     except Exception as e:
         print(f"Lỗi khi chạy variant: {e}")
