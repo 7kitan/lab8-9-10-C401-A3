@@ -195,11 +195,6 @@ def retrieve_hybrid(
     return hybrid_results
 
 
-# =============================================================================
-# RERANK (Sprint 3 alternative)
-# Cross-encoder để chấm lại relevance sau search rộng
-# =============================================================================
-
 def rerank(
     query: str,
     candidates: List[Dict[str, Any]],
@@ -211,28 +206,33 @@ def rerank(
     Cross-encoder: chấm lại "chunk nào thực sự trả lời câu hỏi này?"
     MMR (Maximal Marginal Relevance): giữ relevance nhưng giảm trùng lặp
 
-    Funnel logic (từ slide):
-      Search rộng (top-20) → Rerank (top-6) → Select (top-3)
-
     TODO Sprint 3 (nếu chọn rerank):
     Option A — Cross-encoder:
         from sentence_transformers import CrossEncoder
         model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-        pairs = [[query, chunk["text"]] for chunk in candidates]
-        scores = model.predict(pairs)
-        ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)
-        return [chunk for chunk, _ in ranked[:top_k]]
-
-    Option B — Rerank bằng LLM (đơn giản hơn nhưng tốn token):
-        Gửi list chunks cho LLM, yêu cầu chọn top_k relevant nhất
-
-    Khi nào dùng rerank:
-    - Dense/hybrid trả về nhiều chunk nhưng có noise
-    - Muốn chắc chắn chỉ 3-5 chunk tốt nhất vào prompt
     """
-    # TODO Sprint 3: Implement rerank
-    # Tạm thời trả về top_k đầu tiên (không rerank)
-    return candidates[:top_k]
+    if not candidates:
+        return []
+
+    from sentence_transformers import CrossEncoder
+    
+    # Cache model to tránh việc load lại mỗi lần gọi
+    if not hasattr(rerank, "model"):
+        print("[Rerank] Đang load model Cross-Encoder...")
+        rerank.model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    
+    pairs = [[query, chunk["text"]] for chunk in candidates]
+    scores = rerank.model.predict(pairs)
+    
+    ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)
+    
+    # Cập nhật score và lọc lấy top_k
+    results = []
+    for chunk, score in ranked[:top_k]:
+        chunk["score"] = float(score)
+        results.append(chunk)
+        
+    return results
 
 
 # =============================================================================
