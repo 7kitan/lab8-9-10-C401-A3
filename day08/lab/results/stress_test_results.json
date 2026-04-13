@@ -1,0 +1,101 @@
+[
+  {
+    "id": "s01",
+    "question": "Nếu tôi mua license key Windows nhưng bị lỗi do nhà sản xuất, tôi có được hoàn tiền trong vòng 7 ngày không?",
+    "answer": "Nếu bạn mua license key Windows và sản phẩm bị lỗi do nhà sản xuất, bạn có thể yêu cầu hoàn tiền trong vòng 7 ngày, nhưng chỉ nếu đơn hàng chưa được sử dụng hoặc mở seal. Tuy nhiên, sản phẩm license key thuộc danh mục hàng kỹ thuật số, nên có thể không được hoàn tiền theo chính sách ngoại lệ [1][2].",
+    "expected_behavior": "Hệ thống phải phát hiện đây là 'hàng kỹ thuật số' (license key) và là ngoại lệ không được hoàn tiền, mặc dù có lỗi nhà sản xuất.",
+    "sources": [
+      "policy/refund-v4.pdf",
+      "support/helpdesk-faq.md"
+    ]
+  },
+  {
+    "id": "s02",
+    "question": "Tôi nghe nói SLA xử lý ticket P1 là 6 giờ. Thông tin này có còn chính xác ở phiên bản chính sách 2026.1 không?",
+    "answer": "Thông tin về SLA xử lý ticket P1 trong phiên bản chính sách 2026.1 là 4 giờ cho việc xử lý và khắc phục (resolution) [2].",
+    "expected_behavior": "Hệ thống phải đính chính lại là 4 giờ cho resolution, dẫn chứng từ phiên bản v2026.1 trong sla_p1_2026.txt.",
+    "sources": [
+      "support/sla-p1-2026.pdf",
+      "policy/refund-v4.pdf"
+    ]
+  },
+  {
+    "id": "s03",
+    "question": "Giả sử database production bị sập toàn bộ, mất bao lâu để engineer phải xác nhận severity?",
+    "answer": "Engineer phải xác nhận severity trong vòng 5 phút sau khi nhận alert hoặc ticket [2].",
+    "expected_behavior": "Hệ thống phải nhận diện đây là sự cố P1 (theo ví dụ trong docs) và trả về thời gian xác nhận là 5 phút.",
+    "sources": [
+      "support/sla-p1-2026.pdf",
+      "support/helpdesk-faq.md"
+    ]
+  },
+  {
+    "id": "s04",
+    "question": "Ngày nghỉ phép năm của nhân viên chính thức là bao nhiêu ngày?",
+    "answer": "Ngày nghỉ phép năm của nhân viên chính thức là 12 ngày cho nhân viên dưới 3 năm kinh nghiệm, 15 ngày cho nhân viên từ 3-5 năm kinh nghiệm, và 18 ngày cho nhân viên trên 5 năm kinh nghiệm [1].",
+    "expected_behavior": "Abstain (Nói không biết) vì tài liệu hr_leave_policy.txt chỉ đề cập đến remote work và probation, không nói về số ngày phép năm.",
+    "sources": [
+      "it/access-control-sop.md",
+      "hr/leave-policy-2026.pdf"
+    ]
+  },
+  {
+    "id": "s05",
+    "question": "Tôi có thể yêu cầu hoàn tiền 110% giá trị đơn hàng bằng tiền mặt chuyển khoản không?",
+    "answer": "Bạn không thể yêu cầu hoàn tiền 110% giá trị đơn hàng bằng tiền mặt chuyển khoản. Hoàn tiền chỉ được thực hiện qua phương thức thanh toán gốc hoặc qua credit nội bộ (store credit) với giá trị 110% [1].",
+    "expected_behavior": "Hệ thống phải nói rõ 110% chỉ áp dụng cho 'store credit', còn tiền mặt (phương thức gốc) chỉ là 100%.",
+    "sources": [
+      "policy/refund-v4.pdf"
+    ]
+  },
+  {
+    "id": "s06",
+    "question": "Nếu tôi muốn cấp quyền Level 3, tôi chỉ cần Line Manager và IT Security phê duyệt là đủ đúng không?",
+    "answer": "Không, để cấp quyền Level 3, bạn cần có sự phê duyệt của Line Manager, IT Admin và IT Security [1].",
+    "expected_behavior": "Hệ thống phải chỉ ra là còn thiếu 'IT Admin' mới đủ bộ 3 người phê duyệt.",
+    "sources": [
+      "it/access-control-sop.md",
+      "support/helpdesk-faq.md"
+    ]
+  },
+  {
+    "id": "s07",
+    "question": "Lương tháng 13 được tính như thế nào?",
+    "answer": "Tôi không biết.",
+    "expected_behavior": "Abstain (Nói không biết) vì không có thông tin về lương thưởng trong bộ tài liệu hiện tại.",
+    "sources": [
+      "support/sla-p1-2026.pdf",
+      "hr/leave-policy-2026.pdf",
+      "support/helpdesk-faq.md"
+    ]
+  },
+  {
+    "id": "s08",
+    "question": "Trong sự cố P1, stakeholder được cập nhật tiến độ mỗi 10 phút đúng không?",
+    "answer": "Không, stakeholder được cập nhật tiến độ mỗi 30 phút cho đến khi resolve, không phải mỗi 10 phút [1].",
+    "expected_behavior": "Hệ thống phải sửa lại là 30 phút một lần (theo sla_p1_2026.txt, mục Ticket P1).",
+    "sources": [
+      "support/sla-p1-2026.pdf"
+    ]
+  },
+  {
+    "id": "s09",
+    "question": "Tôi dùng VPN Cisco AnyConnect nhưng bị lỗi ERR-VPN-999, giải quyết thế nào?",
+    "answer": "Để giải quyết lỗi ERR-VPN-999 khi sử dụng VPN Cisco AnyConnect, bạn nên kiểm tra kết nối Internet trước. Nếu vẫn gặp lỗi, hãy tạo ticket P3 với log file VPN đính kèm [1].",
+    "expected_behavior": "Hệ thống nên trả về cách xử lý chung cho VPN (kiểm tra Internet, tạo ticket P3) nhưng thừa nhận không thấy mã lỗi 999 trong tài liệu.",
+    "sources": [
+      "it/access-control-sop.md",
+      "support/helpdesk-faq.md"
+    ]
+  },
+  {
+    "id": "s10",
+    "question": "Nếu nhân viên đang trong probation period, họ được làm remote mấy ngày?",
+    "answer": "Nhân viên đang trong probation period không được làm remote [1].",
+    "expected_behavior": "Hệ thống phải nói là 0 ngày hoặc không được phép, vì chính sách ghi remote work chỉ cho nhân viên 'after probation period'.",
+    "sources": [
+      "it/access-control-sop.md",
+      "hr/leave-policy-2026.pdf"
+    ]
+  }
+]
