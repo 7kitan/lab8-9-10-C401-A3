@@ -7,6 +7,7 @@
 | Nguyễn Tuấn Kiệt | Tech Lead | kiet.swe@gmail.com |
 | [Tên thành viên] | Retrieval Owner | ___ |
 | Nguyễn Văn Bách | Eval Owner | vanbachpk1@gmail.com |
+| Nguyễn Đức Duy | Retrieval Owner + Documentation Owner| ducduynguyen1307@gmail.com
 | Nguyễn Duy Hưng | Documentation Owner | hungngduy2003@gmail.com |
 
 **Ngày nộp:** 2026-04-13  
@@ -97,6 +98,7 @@ Quá trình làm việc nhóm diễn ra khá nhịp nhàng dù các sprint đòi
 | Nguyễn Tuấn Kiệt | Tech Lead - Nối code, config API | 1, 2 |
 | [Tên thành viên] | Retrieval Owner - Chunking, Rerank | 1, 3 |
 | Nguyễn Văn Bách | Eval Owner - Scorecard, A/B Test | 3 |
+| Nguyễn Đức Duy | retrieval strategy, Tuning Log | 3, 4 |
 | Nguyễn Duy Hưng | Documentation Owner - Architecture, Tuning Log, Group Report | 4 |
 
 **Điều nhóm làm tốt:**
