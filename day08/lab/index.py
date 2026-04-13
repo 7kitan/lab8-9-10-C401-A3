@@ -42,23 +42,12 @@ CHUNK_OVERLAP = 80     # tokens overlap giữa các chunk
 
 def preprocess_document(raw_text: str, filepath: str) -> Dict[str, Any]:
     """
-    Preprocess một tài liệu: extract metadata từ header và làm sạch nội dung.
-
-    Args:
-        raw_text: Toàn bộ nội dung file text
-        filepath: Đường dẫn file để làm source mặc định
-
-    Returns:
-        Dict chứa:
-          - "text": nội dung đã clean
-          - "metadata": dict với source, department, effective_date, access
-
-    TODO Sprint 1:
-    - Extract metadata từ dòng đầu file (Source, Department, Effective Date, Access)
-    - Bỏ các dòng header metadata khỏi nội dung chính
-    - Normalize khoảng trắng, xóa ký tự rác
-
-    Gợi ý: dùng regex để parse dòng "Key: Value" ở đầu file.
+    Tiền xử lý tài liệu: Bóc tách Metadata và làm sạch nội dung.
+    
+    Chức năng chính:
+    - Tìm và trích xuất Source, Department, Effective Date, Access từ các dòng đầu file.
+    - Loại bỏ phần header metadata khỏi văn bản chính để không làm nhiễu embedding.
+    - Chuẩn hóa khoảng trắng để văn bản gọn gàng hơn.
     """
     lines = raw_text.strip().split("\n")
     metadata = {
@@ -109,24 +98,12 @@ def preprocess_document(raw_text: str, filepath: str) -> Dict[str, Any]:
 
 def chunk_document(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Chunk một tài liệu đã preprocess thành danh sách các chunk nhỏ.
-
-    Args:
-        doc: Dict với "text" và "metadata" (output của preprocess_document)
-
-    Returns:
-        List các Dict, mỗi dict là một chunk với:
-          - "text": nội dung chunk
-          - "metadata": metadata gốc + "section" của chunk đó
-
-    TODO Sprint 1:
-    1. Split theo heading "=== Section ... ===" hoặc "=== Phần ... ===" trước
-    2. Nếu section quá dài (> CHUNK_SIZE * 4 ký tự), split tiếp theo paragraph
-    3. Thêm overlap: lấy đoạn cuối của chunk trước vào đầu chunk tiếp theo
-    4. Mỗi chunk PHẢI giữ metadata đầy đủ từ tài liệu gốc
-
-    Gợi ý: Ưu tiên cắt tại ranh giới tự nhiên (section, paragraph)
-    thay vì cắt theo token count cứng.
+    Chia nhỏ tài liệu (Chunking) theo cấu trúc tự nhiên.
+    
+    Chiến thuật:
+    1. Ưu tiên chia theo các tiêu đề mục (Section Heading) như "=== Section 1 ===".
+    2. Nếu một mục quá dài, chia tiếp theo từng đoạn văn (Paragraph).
+    3. Thêm Overlap (khoảng gối đầu) giữa các chunk để duy trì ngữ cảnh cho LLM.
     """
     text = doc["text"]
     base_metadata = doc["metadata"].copy()
@@ -265,25 +242,11 @@ def get_embedding(text: str) -> List[float]:
 
 def build_index(docs_dir: Path = DOCS_DIR, db_dir: Path = CHROMA_DB_DIR) -> None:
     """
-    Pipeline hoàn chỉnh: đọc docs → preprocess → chunk → embed → store.
-
-    TODO Sprint 1:
-    1. Cài thư viện: pip install chromadb
-    2. Khởi tạo ChromaDB client và collection
-    3. Với mỗi file trong docs_dir:
-       a. Đọc nội dung
-       b. Gọi preprocess_document()
-       c. Gọi chunk_document()
-       d. Với mỗi chunk: gọi get_embedding() và upsert vào ChromaDB
-    4. In số lượng chunk đã index
-
-    Gợi ý khởi tạo ChromaDB:
-        import chromadb
-        client = chromadb.PersistentClient(path=str(db_dir))
-        collection = client.get_or_create_collection(
-            name="rag_lab",
-            metadata={"hnsw:space": "cosine"}
-        )
+    Quy trình xây dựng chỉ mục (Index) hoàn chỉnh:
+    1. Đọc tất cả file tài liệu từ thư mục `data/docs/`.
+    2. Bóc tách Metadata (nguồn, bộ phận...) bằng `preprocess_document`.
+    3. Chia nhỏ văn bản bằng `chunk_document`.
+    4. Chuyển đổi văn bản thành Vector (Embedding) và lưu vào ChromaDB.
     """
     import chromadb
 

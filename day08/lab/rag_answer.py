@@ -43,22 +43,10 @@ LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 
 def retrieve_dense(query: str, top_k: int = TOP_K_SEARCH) -> List[Dict[str, Any]]:
     """
-    Dense retrieval: tìm kiếm theo embedding similarity trong ChromaDB.
-
-    Args:
-        query: Câu hỏi của người dùng
-        top_k: Số chunk tối đa trả về
-
-    Returns:
-        List các dict, mỗi dict là một chunk với:
-          - "text": nội dung chunk
-          - "metadata": metadata (source, section, effective_date, ...)
-          - "score": cosine similarity score
-
-    TODO Sprint 2:
-    1. Embed query bằng cùng model đã dùng khi index (xem index.py)
-    2. Query ChromaDB với embedding đó
-    3. Trả về kết quả kèm score
+    Tìm kiếm ngữ nghĩa (Dense Retrieval):
+    - Sử dụng Vector Similarity để tìm các đoạn văn bản có ý nghĩa gần nhất với câu hỏi.
+    - Chuyển đổi Query thành Vector và so sánh với ChromaDB.
+    - Hiệu quả với các câu hỏi diễn đạt theo nhiều cách khác nhau nhưng cùng ý nghĩa.
     """
     import chromadb
     from index import get_embedding, CHROMA_DB_DIR
@@ -148,23 +136,10 @@ def retrieve_hybrid(
     sparse_weight: float = 0.4,
 ) -> List[Dict[str, Any]]:
     """
-    Hybrid retrieval: kết hợp dense và sparse bằng Reciprocal Rank Fusion (RRF).
-
-    Mạnh ở: giữ được cả nghĩa (dense) lẫn keyword chính xác (sparse)
-    Phù hợp khi: corpus lẫn lộn ngôn ngữ tự nhiên và tên riêng/mã lỗi/điều khoản
-
-    Args:
-        dense_weight: Trọng số cho dense score (0-1)
-        sparse_weight: Trọng số cho sparse score (0-1)
-
-    TODO Sprint 3 (nếu chọn hybrid):
-    1. Chạy retrieve_dense() → dense_results
-    2. Chạy retrieve_sparse() → sparse_results
-    3. Merge bằng RRF:
-       RRF_score(doc) = dense_weight * (1 / (60 + dense_rank)) +
-                        sparse_weight * (1 / (60 + sparse_rank))
-       60 là hằng số RRF tiêu chuẩn
-    4. Sort theo RRF score giảm dần, trả về top_k
+    Tìm kiếm kết hợp (Hybrid Retrieval):
+    - Gộp kết quả từ Dense (Ngữ nghĩa) và Sparse (Từ khóa) bằng Reciprocal Rank Fusion (RRF).
+    - Giúp hệ thống vừa hiểu được ý nghĩa câu hỏi, vừa bắt được các mã lỗi/từ chuyên ngành chính xác.
+    - RRF score được tính dựa trên thứ hạng (rank) của văn bản trong cả 2 danh sách kết quả.
     """
     dense_results = retrieve_dense(query, top_k=top_k * 2)
     sparse_results = retrieve_sparse(query, top_k=top_k * 2)
@@ -201,15 +176,10 @@ def rerank(
     top_k: int = TOP_K_SELECT,
 ) -> List[Dict[str, Any]]:
     """
-    Rerank các candidate chunks bằng cross-encoder.
-
-    Cross-encoder: chấm lại "chunk nào thực sự trả lời câu hỏi này?"
-    MMR (Maximal Marginal Relevance): giữ relevance nhưng giảm trùng lặp
-
-    TODO Sprint 3 (nếu chọn rerank):
-    Option A — Cross-encoder:
-        from sentence_transformers import CrossEncoder
-        model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    Sắp xếp lại (Reranking):
+    - Sử dụng model Cross-Encoder mạnh mẽ hơn để chấm điểm lại top 10 candidates.
+    - Model này "nhìn" cả query và chunk cùng lúc để đánh giá mức độ liên quan.
+    - Giúp lọc bỏ các chunk "nhiễu" có vector tương đồng nhưng nội dung không thực sự trả lời được câu hỏi.
     """
     if not candidates:
         return []

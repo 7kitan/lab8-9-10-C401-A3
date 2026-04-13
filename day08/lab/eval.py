@@ -137,23 +137,10 @@ def score_context_recall(
     expected_sources: List[str],
 ) -> Dict[str, Any]:
     """
-    Context Recall: Retriever có mang về đủ evidence cần thiết không?
-    Câu hỏi: Expected source có nằm trong retrieved chunks không?
-
-    Đây là metric đo retrieval quality, không phải generation quality.
-
-    Cách tính đơn giản:
-        recall = (số expected source được retrieve) / (tổng số expected sources)
-
-    Ví dụ:
-        expected_sources = ["policy/refund-v4.pdf", "sla-p1-2026.pdf"]
-        retrieved_sources = ["policy/refund-v4.pdf", "helpdesk-faq.md"]
-        recall = 1/2 = 0.5
-
-    TODO Sprint 4:
-    1. Lấy danh sách source từ chunks_used
-    2. Kiểm tra xem expected_sources có trong retrieved sources không
-    3. Tính recall score
+    Đánh giá mức độ thu hồi thông tin (Context Recall):
+    - Mục tiêu: Kiểm tra xem bước Retrieval có mang về đúng tài liệu chứa câu trả lời hay không.
+    - Cách tính: (Số tài liệu đúng được tìm thấy) / (Tổng số tài liệu cần tìm).
+    - Đây là chỉ số quan trọng nhất để biết hệ thống tìm kiếm (Search) có hoạt động tốt không.
     """
     if not expected_sources:
         # Câu hỏi không có expected source (ví dụ: "Không đủ dữ liệu" cases)

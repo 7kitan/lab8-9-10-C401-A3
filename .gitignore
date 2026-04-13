@@ -14,3 +14,8 @@ day08/lab/results/
 **/__pycache__/
 *.py[cod]
 *.class
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
