@@ -1,6 +1,18 @@
-.DS_Store
-*.swp
-*~
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
 
-# Grading questions — không public trước 17:00
-day08/lab/data/grading_questions.json
+# Database / Vector Store
+chroma_db/
+
+# Sensitive data
+.env
+
+# IDEs
+.vscode/
+.idea/
