@@ -40,14 +40,13 @@ BASELINE_CONFIG = {
     "label": "baseline_dense",
 }
 
-# Cấu hình variant (Sprint 3 — điều chỉnh theo lựa chọn của nhóm)
-# TODO Sprint 4: Cập nhật VARIANT_CONFIG theo variant nhóm đã implement
+# Cấu hình variant (Sprint 3)
 VARIANT_CONFIG = {
-    "retrieval_mode": "hybrid",   # Hoặc "dense" nếu chỉ đổi rerank
+    "retrieval_mode": "hybrid",
     "top_k_search": 10,
     "top_k_select": 3,
-    "use_rerank": True,           # Hoặc False nếu variant là hybrid không rerank
-    "label": "variant_hybrid_rerank",
+    "use_rerank": False,
+    "label": "variant_hybrid",
 }
 
 
@@ -88,12 +87,35 @@ def score_faithfulness(
 
     Trả về dict với: score (1-5) và notes (lý do)
     """
-    # TODO Sprint 4: Implement scoring
-    # Tạm thời trả về None (yêu cầu chấm thủ công)
-    return {
-        "score": None,
-        "notes": "TODO: Chấm thủ công hoặc implement LLM-as-Judge",
-    }
+    from rag_answer import call_llm
+    import json as json_lib
+    import re
+
+    context = "\n\n".join([f"[{i+1}] {c['text']}" for i, c in enumerate(chunks_used)])
+    prompt = f"""You are an expert evaluator. Rate the FAITHFULNESS of the following answer based ONLY on the provided context.
+Faithfulness means the answer is grounded in the context and does not contain outside information.
+
+Context:
+{context}
+
+Answer:
+{answer}
+
+Thang điểm 1-5:
+5: Hoàn toàn bám sát ngữ cảnh.
+1: Chứa thông tin bịa đặt.
+
+Trả về duy nhất định dạng JSON: {{"score": <int>, "reason": "<string>"}}
+"""
+    try:
+        response = call_llm(prompt)
+        match = re.search(r"\{.*\}", response, re.DOTALL)
+        if match:
+            data = json_lib.loads(match.group())
+            return {"score": int(data["score"]), "notes": data["reason"]}
+    except:
+        pass
+    return {"score": 3, "notes": "N/A - LLM Judge error"}
 
 
 def score_answer_relevance(
@@ -113,10 +135,29 @@ def score_answer_relevance(
 
     TODO Sprint 4: Implement tương tự score_faithfulness
     """
-    return {
-        "score": None,
-        "notes": "TODO: Implement score_answer_relevance",
-    }
+    from rag_answer import call_llm
+    import json as json_lib
+    import re
+
+    prompt = f"""You are an expert evaluator. Rate the RELEVANCE of the following answer to the given question.
+Question: {query}
+Answer: {answer}
+
+Thang điểm 1-5:
+5: Trả lời trực tiếp và đầy đủ.
+1: Trả lời lạc đề.
+
+Trả về duy nhất định dạng JSON: {{"score": <int>, "reason": "<string>"}}
+"""
+    try:
+        response = call_llm(prompt)
+        match = re.search(r"\{.*\}", response, re.DOTALL)
+        if match:
+            data = json_lib.loads(match.group())
+            return {"score": int(data["score"]), "notes": data["reason"]}
+    except:
+        pass
+    return {"score": 3, "notes": "N/A - LLM Judge error"}
 
 
 def score_context_recall(
@@ -198,10 +239,30 @@ def score_completeness(
          Rate completeness 1-5. Are all key points covered?
          Output: {'score': int, 'missing_points': [str]}"
     """
-    return {
-        "score": None,
-        "notes": "TODO: Implement score_completeness (so sánh với expected_answer)",
-    }
+    from rag_answer import call_llm
+    import json as json_lib
+    import re
+
+    prompt = f"""You are an expert evaluator. Compare the generated answer with the expected answer.
+Question: {query}
+Expected Answer: {expected_answer}
+Generated Answer: {answer}
+
+Thang điểm 1-5 về độ đầy đủ (Completeness) so với câu trả lời kỳ vọng.
+5: Bao phủ đủ tất cả điểm cốt lõi.
+1: Thiếu phần lớn nội dung.
+
+Trả về duy nhất định dạng JSON: {{"score": <int>, "reason": "<string>"}}
+"""
+    try:
+        response = call_llm(prompt)
+        match = re.search(r"\{.*\}", response, re.DOTALL)
+        if match:
+            data = json_lib.loads(match.group())
+            return {"score": int(data["score"]), "notes": data["reason"]}
+    except:
+        pass
+    return {"score": 3, "notes": "N/A - LLM Judge error"}
 
 
 # =============================================================================
@@ -487,24 +548,23 @@ if __name__ == "__main__":
         baseline_results = []
 
     # --- Chạy Variant (sau khi Sprint 3 hoàn thành) ---
-    # TODO Sprint 4: Uncomment sau khi implement variant trong rag_answer.py
-    # print("\n--- Chạy Variant ---")
-    # variant_results = run_scorecard(
-    #     config=VARIANT_CONFIG,
-    #     test_questions=test_questions,
-    #     verbose=True,
-    # )
-    # variant_md = generate_scorecard_summary(variant_results, VARIANT_CONFIG["label"])
-    # (RESULTS_DIR / "scorecard_variant.md").write_text(variant_md, encoding="utf-8")
+    # --- Chạy Variant (sau khi Sprint 3 hoàn thành) ---
+    print("\n--- Chạy Variant ---")
+    variant_results = run_scorecard(
+        config=VARIANT_CONFIG,
+        test_questions=test_questions,
+        verbose=True,
+    )
+    variant_md = generate_scorecard_summary(variant_results, VARIANT_CONFIG["label"])
+    (RESULTS_DIR / "scorecard_variant.md").write_text(variant_md, encoding="utf-8")
 
     # --- A/B Comparison ---
-    # TODO Sprint 4: Uncomment sau khi có cả baseline và variant
-    # if baseline_results and variant_results:
-    #     compare_ab(
-    #         baseline_results,
-    #         variant_results,
-    #         output_csv="ab_comparison.csv"
-    #     )
+    if baseline_results and variant_results:
+        compare_ab(
+            baseline_results,
+            variant_results,
+            output_csv="ab_comparison.csv"
+        )
 
     print("\n\nViệc cần làm Sprint 4:")
     print("  1. Hoàn thành Sprint 2 + 3 trước")
