@@ -76,10 +76,40 @@ def retrieve_dense(query: str, top_k: int = TOP_K_SEARCH) -> List[Dict[str, Any]
         # Lưu ý: distances trong ChromaDB cosine = 1 - similarity
         # Score = 1 - distance
     """
-    raise NotImplementedError(
-        "TODO Sprint 2: Implement retrieve_dense().\n"
-        "Tham khảo comment trong hàm để biết cách query ChromaDB."
+    # TODO Sprint 2: Implement retrieve_dense().
+    import chromadb
+    from index import get_embedding, CHROMA_DB_DIR
+    
+    # 1. Khởi tạo PersistentClient và lấy Collection đã build ở Sprint 1
+    client = chromadb.PersistentClient(path=str(CHROMA_DB_DIR))
+    collection = client.get_collection("rag_lab")
+    
+    # 2. Vector hoá câu hỏi của người dùng (bất kể OpenAI hay Local, nó gọi hàm bên index tự dính)
+    query_embedding = get_embedding(query)
+    
+    # 3. Quét tìm trong Vector DB
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=top_k,
+        include=["documents", "metadatas", "distances"]
     )
+    
+    # 4. Gom nhóm kết quả trả về
+    chunks = []
+    # Kiểm tra xem có kết quả rớt về mảng đầu tiên hay không
+    if results and results.get("documents") and results["documents"][0]:
+        docs = results["documents"][0]
+        metas = results["metadatas"][0]
+        dists = results["distances"][0] # Distances theo cosine distance
+        
+        for doc, meta, dist in zip(docs, metas, dists):
+            chunks.append({
+                "text": doc,
+                "metadata": meta,
+                "score": 1.0 - dist # Công thức đảo nghịch từ distance sang similarity score
+            })
+            
+    return chunks
 
 
 # =============================================================================
@@ -316,10 +346,40 @@ def call_llm(prompt: str) -> str:
 
     Lưu ý: Dùng temperature=0 hoặc thấp để output ổn định cho evaluation.
     """
-    raise NotImplementedError(
-        "TODO Sprint 2: Implement call_llm().\n"
-        "Chọn Option A (OpenAI) hoặc Option B (Gemini) trong TODO comment."
-    )
+    # TODO Sprint 2: Implement call_llm().
+    # Tương tự như Embedding, Superpowers skill khuyến khích ta tạo dual-mode để mọi người dễ thử nghiệm
+    provider = os.getenv("LLM_PROVIDER", "openai").lower()
+    
+    if provider == "openai":
+        from openai import OpenAI
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("Thiếu OPENAI_API_KEY. Vui lòng bổ sung vào .env")
+            
+        client = OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model=LLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0, # Tuyệt đối = 0 để cấm tính sáng tạo (bịa/ hallucination) của LLM
+            max_tokens=512,
+        )
+        return response.choices[0].message.content
+        
+    elif provider == "gemini":
+        import google.generativeai as genai
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("Thiếu GOOGLE_API_KEY. Vui lòng bổ sung vào .env")
+            
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash") # Dòng flash cực nhanh và rẻ
+        # Ràng buộc generation config bằng nhiệt độ 0
+        generation_config = genai.GenerationConfig(temperature=0, max_output_tokens=512)
+        response = model.generate_content(prompt, generation_config=generation_config)
+        return response.text
+        
+    else:
+        raise ValueError(f"Không hỗ trợ Provider LLM: {provider}")
 
 
 def rag_answer(
