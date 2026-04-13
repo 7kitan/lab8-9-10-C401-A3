@@ -125,13 +125,13 @@ def chunk_document(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
     # Bước 1: Split theo heading pattern "=== ... ==="
     sections = re.split(r"(===.*?===)", text)
 
-    current_section = "General"
+    current_section = None
     current_section_text = ""
 
     for part in sections:
         if re.match(r"===.*?===", part):
             # Lưu section trước (nếu có nội dung)
-            if current_section_text.strip():
+            if current_section and current_section_text.strip():
                 section_chunks = _split_by_size(
                     current_section_text.strip(),
                     base_metadata=base_metadata,
@@ -145,7 +145,7 @@ def chunk_document(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
             current_section_text += part
 
     # Lưu section cuối cùng
-    if current_section_text.strip():
+    if current_section and current_section_text.strip():
         section_chunks = _split_by_size(
             current_section_text.strip(),
             base_metadata=base_metadata,
@@ -173,7 +173,8 @@ def _split_by_size(
         }]
 
     chunks = []
-    paragraphs = text.split("\n\n")
+    # paragraphs = text.split("\n\n")
+    paragraphs = [text]  # Treat the whole text as one paragraph to test direct size-based splitting
     current_chunk = ""
 
     for p in paragraphs:
@@ -422,8 +423,3 @@ if __name__ == "__main__":
     print("="*60)
     list_chunks(n=3)
     inspect_metadata_coverage()
-
-    print("\n" + "!"*60)
-    print("CHÚC MỪNG: BẠN ĐÃ HOÀN THÀNH SPRINT 1 (INDEXING)")
-    print("Thông tin Metadata đã được trích xuất đầy đủ.")
-    print("!"*60)
