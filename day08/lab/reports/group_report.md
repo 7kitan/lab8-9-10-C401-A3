@@ -6,7 +6,7 @@
 |-----|---------|-------|
 | [Tên thành viên] | Tech Lead | ___ |
 | [Tên thành viên] | Retrieval Owner | ___ |
-| [Tên thành viên] | Eval Owner | vanbachpk1@gmail.com |
+| Nguyễn Văn Bách | Eval Owner | vanbachpk1@gmail.com |
 | Nguyễn Duy Hưng | Documentation Owner | hungngduy2003@gmail.com |
 
 **Ngày nộp:** 2026-04-13  
