@@ -11,6 +11,7 @@
 | Nguyễn Đức Duy| Supervisor Owner & Docs Owner | ducduynguyen1307@gmail.com |
 | Trần Trọng Giang | MCP Owner | <giang56b20@gmail.com>|
 | Nguyễn Duy Hưng | Trace & Docs Owner | <hungngduy2003@gmail.com> |
+| Nguyễn Xuân Hoàng | Worker Owner | <hoangnx.hust@gmail.com> |
 
 **Ngày nộp:** 14/04/2026
 
@@ -119,6 +120,7 @@ Trong file `graph.py`, Supervisor route chính xác task "CS Refund" vào Policy
 | Nguyễn Đức Duy| graph.py | 1 |
 | Trần Trọng Giang | mcp_server.py | 3 |
 | Nguyễn Duy Hưng | eval_trace.py, 2 doc templates: routing_decisions & single_vs_multi_comparison, group_report | 4 |
+| Nguyễn Xuân Hoàng | retrieval.py, standalone testing script | 2 |
 
 **Điều nhóm làm tốt:** Việc thống nhất **AgentState schema** và **YAML Contracts** ngay từ Sprint 1 là "chìa khóa" giúp cả team phát triển song song. MCP Owner có thể test tool, Worker Owner có thể viết logic phân tích mà không cần đợi Supervisor hoàn thiện Graph.
 
