@@ -1,6 +1,6 @@
 # Báo Cáo Cá Nhân — Lab Day 09: Multi-Agent Orchestration
 
-**Họ và tên:** Giang  
+**Họ và tên:** Trần Trọng Giang  
 **Vai trò trong nhóm:** MCP Owner  
 **Ngày nộp:** 2026-04-14  
 **Độ dài yêu cầu:** 500–800 từ
