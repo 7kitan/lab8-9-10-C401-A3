@@ -58,7 +58,7 @@ def _get_embedding_fn():
     import random
     def embed(text: str) -> list:
         return [random.random() for _ in range(384)]
-    print("⚠️  WARNING: Using random embeddings (test only). Install sentence-transformers.")
+    print("WARNING: Using random embeddings (test only). Install sentence-transformers.")
     return embed
 
 
@@ -77,7 +77,7 @@ def _get_collection():
             "day09_docs",
             metadata={"hnsw:space": "cosine"}
         )
-        print(f"⚠️  Collection 'day09_docs' chưa có data. Chạy index script trong README trước.")
+        print(f"Collection 'day09_docs' chưa có data. Chạy index script trong README trước.")
     return collection
 
 
@@ -120,7 +120,7 @@ def retrieve_dense(query: str, top_k: int = DEFAULT_TOP_K) -> list:
         return chunks
 
     except Exception as e:
-        print(f"⚠️  ChromaDB query failed: {e}")
+        print(f"ChromaDB query failed: {e}")
         # Fallback: return empty (abstain)
         return []
 
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     ]
 
     for query in test_queries:
-        print(f"\n▶ Query: {query}")
+        print(f"\n[QUERY] {query}")
         result = run({"task": query})
         chunks = result.get("retrieved_chunks", [])
         print(f"  Retrieved: {len(chunks)} chunks")
@@ -203,4 +203,4 @@ if __name__ == "__main__":
             print(f"    [{c['score']:.3f}] {c['source']}: {c['text'][:80]}...")
         print(f"  Sources: {result.get('retrieved_sources', [])}")
 
-    print("\n✅ retrieval_worker test done.")
+    print("\n[OK] retrieval_worker test done.")
