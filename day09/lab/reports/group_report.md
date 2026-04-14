@@ -115,7 +115,7 @@ Trong file `graph.py`, Supervisor route chính xác task "CS Refund" vào Policy
 |------------|-------------|--------|
 | Nguyễn Tuấn Kiệt | `synthesis.py`, worker testing script | 2 |
 | Nguyễn Văn Bách | policy_tool.py | 2 |
-| | | |
+| Trần Trọng Giang | mcp_server.py | 3 |
 | Nguyễn Duy Hưng | eval_trace.py, 2 doc templates: routing_decisions & single_vs_multi_comparison, group_report | 4 |
 
 **Điều nhóm làm tốt:** Việc thống nhất **AgentState schema** và **YAML Contracts** ngay từ Sprint 1 là "chìa khóa" giúp cả team phát triển song song. MCP Owner có thể test tool, Worker Owner có thể viết logic phân tích mà không cần đợi Supervisor hoàn thiện Graph.
