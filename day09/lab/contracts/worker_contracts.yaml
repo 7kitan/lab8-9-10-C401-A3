@@ -97,7 +97,7 @@ retrieval_worker:
     - "Stateless: không đọc hoặc ghi state ngoài những gì được khai báo ở trên"
   actual_implementation:
     status: "done"
-    notes: "Implemented dense retrieval with all-MiniLM-L6-v2 and local ChromaDB at ./data/chroma_db."
+    notes: "Implemented dense retrieval with all-MiniLM-L6-v2 and local ChromaDB at ./chroma_db."
 
 # ─────────────────────────────────────────────
 # Policy Tool Worker

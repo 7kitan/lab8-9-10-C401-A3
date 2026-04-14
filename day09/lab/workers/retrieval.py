@@ -68,7 +68,7 @@ def _get_collection():
     TODO Sprint 2: Đảm bảo collection đã được build từ Step 3 trong README.
     """
     import chromadb
-    client = chromadb.PersistentClient(path="./data/chroma_db")
+    client = chromadb.PersistentClient(path="./chroma_db")
     try:
         collection = client.get_collection("day09_docs")
     except Exception:
