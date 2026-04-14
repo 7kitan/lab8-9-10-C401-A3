@@ -89,36 +89,32 @@ def supervisor_node(state: AgentState) -> AgentState:
     task = state["task"].lower()
     state["history"].append(f"[supervisor] received task: {state['task'][:80]}")
 
-    # --- TODO: Implement routing logic ---
-    # Gợi ý:
-    # - "hoàn tiền", "refund", "flash sale", "license" → policy_tool_worker
-    # - "cấp quyền", "access level", "level 3", "emergency" → policy_tool_worker
-    # - "P1", "escalation", "sla", "ticket" → retrieval_worker
-    # - mã lỗi không rõ (ERR-XXX), không đủ context → human_review
-    # - còn lại → retrieval_worker
-
-    route = "retrieval_worker"         # TODO: thay bằng logic thực
-    route_reason = "default route"    # TODO: thay bằng lý do thực
+    # Routing Configuration
+    policy_keywords = ["hoàn tiền", "refund", "flash sale", "license", "cấp quyền", "access level", "level 3"]
+    retrieval_keywords = ["p1", "sla", "ticket", "escalation", "sự cố"]
+    
+    # Defaults
+    route = "retrieval_worker"
+    route_reason = "default route to retrieval_worker as no specific keywords were found"
     needs_tool = False
     risk_high = False
 
-    # Ví dụ routing cơ bản — nhóm phát triển thêm:
-    policy_keywords = ["hoàn tiền", "refund", "flash sale", "license", "cấp quyền", "access", "level 3"]
-    risk_keywords = ["emergency", "khẩn cấp", "2am", "không rõ", "err-"]
-
-    if any(kw in task for kw in policy_keywords):
-        route = "policy_tool_worker"
-        route_reason = f"task contains policy/access keyword"
-        needs_tool = True
-
-    if any(kw in task for kw in risk_keywords):
+    # 1. Human review has highest priority for errors
+    if "err-" in task:
         risk_high = True
-        route_reason += " | risk_high flagged"
-
-    # Human review override
-    if risk_high and "err-" in task:
         route = "human_review"
-        route_reason = "unknown error code + risk_high → human review"
+        route_reason = "unknown error code detected (err-) -> requires human review"
+    
+    # 2. Policy-related logic
+    elif any(kw in task for kw in policy_keywords):
+        route = "policy_tool_worker"
+        route_reason = "task contains policy or access-level keywords"
+        needs_tool = True
+        
+    # 3. Retrieval standard priority
+    elif any(kw in task for kw in retrieval_keywords):
+        route = "retrieval_worker"
+        route_reason = "task contains system/ticket incident metrics requiring knowledge base retrieval"
 
     state["supervisor_route"] = route
     state["route_reason"] = route_reason
