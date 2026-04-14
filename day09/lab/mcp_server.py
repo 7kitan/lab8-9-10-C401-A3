@@ -1,6 +1,7 @@
 """
 mcp_server.py — Mock MCP Server
 Sprint 3: Implement ít nhất 2 MCP tools.
+Owner: Giang (MCP Owner - Member 3)
 
 Mô phỏng MCP (Model Context Protocol) interface trong Python.
 Agent (MCP client) gọi dispatch_tool() thay vì hard-code từng API.
@@ -135,34 +136,72 @@ TOOL_SCHEMAS = {
 def tool_search_kb(query: str, top_k: int = 3) -> dict:
     """
     Tìm kiếm Knowledge Base bằng semantic search.
-
-    TODO Sprint 3: Kết nối với ChromaDB thực.
-    Hiện tại: Delegate sang retrieval worker.
+    Fallback: Keyword search trực tiếp trong files nếu ChromaDB chưa sẵn sàng.
     """
     try:
-        # Tái dùng retrieval logic từ workers/retrieval.py
+        # Tái dùng retrieval logic từ workers/retrieval.py (nếu có)
         import sys
         sys.path.insert(0, os.path.dirname(__file__))
-        from workers.retrieval import retrieve_dense
-        chunks = retrieve_dense(query, top_k=top_k)
-        sources = list({c["source"] for c in chunks})
-        return {
-            "chunks": chunks,
-            "sources": sources,
-            "total_found": len(chunks),
-        }
-    except Exception as e:
-        # Fallback: return mock data nếu ChromaDB chưa setup
-        return {
-            "chunks": [
-                {
-                    "text": f"[MOCK] Không thể query ChromaDB: {e}. Kết quả giả lập.",
-                    "source": "mock_data",
-                    "score": 0.5,
+        try:
+            from workers.retrieval import retrieve_dense
+            chunks = retrieve_dense(query, top_k=top_k)
+            if chunks:
+                sources = list({c["source"] for c in chunks})
+                return {
+                    "chunks": chunks,
+                    "sources": sources,
+                    "total_found": len(chunks),
                 }
-            ],
-            "sources": ["mock_data"],
-            "total_found": 1,
+        except (ImportError, AttributeError):
+            pass
+
+        # Fallback: Keyword search trong data/docs
+        docs_dir = "./data/docs"
+        found_chunks = []
+        if os.path.exists(docs_dir):
+            keywords = [kw for kw in query.lower().split() if len(kw) > 1]
+            for fname in os.listdir(docs_dir):
+                if not fname.endswith(".txt"): continue
+                path = os.path.join(docs_dir, fname)
+                with open(path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    # Chia nhỏ content thành các đoạn (chunks) đơn giản bằng double newline
+                    sections = content.split("\n\n")
+                    for section in sections:
+                        section_lower = section.lower()
+                        matched = sum(1 for kw in keywords if kw in section_lower)
+                        if matched > 0:
+                            # Score dựa trên tỷ lệ keywords matched
+                            score = round(matched / max(len(keywords), 1), 2)
+                            found_chunks.append({
+                                "text": section.strip(),
+                                "source": fname,
+                                "score": min(score, 1.0)
+                            })
+        
+        # Sort by score (descending) and limit
+        found_chunks = sorted(found_chunks, key=lambda x: x["score"], reverse=True)[:top_k]
+        sources = list({c["source"] for c in found_chunks})
+        
+        if found_chunks:
+            return {
+                "chunks": found_chunks,
+                "sources": sources,
+                "total_found": len(found_chunks)
+            }
+
+        return {
+            "chunks": [{"text": "Không tìm thấy kết quả phù hợp.", "source": "none", "score": 0.0}],
+            "sources": [],
+            "total_found": 0
+        }
+
+    except Exception as e:
+        return {
+            "error": f"Search KB failed: {e}",
+            "chunks": [],
+            "sources": [],
+            "total_found": 0
         }
 
 
@@ -179,6 +218,17 @@ MOCK_TICKETS = {
         "escalated": True,
         "escalated_to": "senior_engineer_team",
         "notifications_sent": ["slack:#incident-p1", "email:incident@company.internal", "pagerduty:oncall"],
+    },
+    "GQ-01": {
+        "ticket_id": "IT-2247",
+        "priority": "P1",
+        "title": "Database connection timeout in production",
+        "status": "resolved",
+        "assignee": "tran.thi.b@company.internal",
+        "created_at": "2026-04-13T22:47:00",
+        "sla_deadline": "2026-04-14T02:47:00",
+        "escalated": True,
+        "notifications_sent": ["slack:#alert-ops", "email:admin@company.internal"],
     },
     "IT-1234": {
         "ticket_id": "IT-1234",
@@ -327,22 +377,40 @@ def dispatch_tool(tool_name: str, tool_input: dict) -> dict:
         }
 
 
+def dispatch_tool_with_trace(tool_name: str, tool_input: dict) -> dict:
+    """
+    Wrapper cho dispatch_tool() kèm metadata cho trace system.
+    Phase 4 (Policy Worker) nên dùng hàm này.
+    """
+    timestamp = datetime.now().isoformat()
+    result = dispatch_tool(tool_name, tool_input)
+    
+    return {
+        "tool": tool_name,
+        "input": tool_input,
+        "output": result,
+        "error": result.get("error") if isinstance(result, dict) else None,
+        "timestamp": timestamp,
+    }
+
+
 # ─────────────────────────────────────────────
 # Test & Demo
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
+    # Test script for MCP Server
     print("=" * 60)
-    print("MCP Server — Tool Discovery & Test")
+    print("MCP Server - Tool Discovery & Test")
     print("=" * 60)
 
     # 1. Discover tools
-    print("\n📋 Available Tools:")
+    print("\nAvailable Tools:")
     for tool in list_tools():
-        print(f"  • {tool['name']}: {tool['description'][:60]}...")
+        print(f"  * {tool['name']}: {tool['description'][:60]}...")
 
     # 2. Test search_kb
-    print("\n🔍 Test: search_kb")
+    print("\nTest: search_kb")
     result = dispatch_tool("search_kb", {"query": "SLA P1 resolution time", "top_k": 2})
     if result.get("chunks"):
         for c in result["chunks"]:
@@ -351,14 +419,14 @@ if __name__ == "__main__":
         print(f"  Result: {result}")
 
     # 3. Test get_ticket_info
-    print("\n🎫 Test: get_ticket_info")
+    print("\nTest: get_ticket_info")
     ticket = dispatch_tool("get_ticket_info", {"ticket_id": "P1-LATEST"})
     print(f"  Ticket: {ticket.get('ticket_id')} | {ticket.get('priority')} | {ticket.get('status')}")
     if ticket.get("notifications_sent"):
         print(f"  Notifications: {ticket['notifications_sent']}")
 
     # 4. Test check_access_permission
-    print("\n🔐 Test: check_access_permission (Level 3, emergency)")
+    print("\nTest: check_access_permission (Level 3, emergency)")
     perm = dispatch_tool("check_access_permission", {
         "access_level": 3,
         "requester_role": "contractor",
@@ -370,9 +438,9 @@ if __name__ == "__main__":
     print(f"  notes: {perm.get('notes')}")
 
     # 5. Test invalid tool
-    print("\n❌ Test: invalid tool")
+    print("\nTest: invalid tool")
     err = dispatch_tool("nonexistent_tool", {})
     print(f"  Error: {err.get('error')}")
 
-    print("\n✅ MCP server test done.")
+    print("\nMCP server test done.")
     print("\nTODO Sprint 3: Implement HTTP server nếu muốn bonus +2.")
