@@ -2,23 +2,24 @@
 
 **Tên nhóm:** Nhóm C401 - A3
 **Thành viên:**
+
 | Tên | Vai trò | Email |
 |-----|---------|-------|
+| Nguyễn Tuấn Kiệt | Worker Owner | <kiet.swe@gmail.com> |
 | | | |
 | | | |
-| | | |
-| Nguyễn Duy Hưng | Trace & Docs Owner | hungngduy2003@gmail.com |
+| Nguyễn Duy Hưng | Trace & Docs Owner | <hungngduy2003@gmail.com> |
 
 **Ngày nộp:** 14/04/2026
 
-**Repo:** https://github.com/7kitan/lab8-9-10-C401-A3.git
+**Repo:** <https://github.com/7kitan/lab8-9-10-C401-A3.git>
 
 **Độ dài khuyến nghị:** 600–1000 từ
 
 ---
 
 > **Hướng dẫn nộp group report:**
-> 
+>
 > - File này nộp tại: `reports/group_report.md`
 > - Deadline: Được phép commit **sau 18:00** (xem SCORING.md)
 > - Tập trung vào **quyết định kỹ thuật cấp nhóm** — không trùng lặp với individual reports
@@ -36,7 +37,8 @@
 
 **Routing logic cốt lõi:** Supervisor sử dụng phương pháp **Keyword Matching** (SLA, Refund, Access, v.v.) để phân loại yêu cầu nhanh chóng vào các worker đích. Điểm đặc biệt là cơ chế phát hiện mã lỗi lạ (`err-`) để tự động gắn cờ `risk_high=true`, chuyển yêu cầu sang luồng Human Review.
 
-**MCP tools đã tích hợp:** 
+**MCP tools đã tích hợp:**
+
 - `search_kb`: Công cụ tìm kiếm Knowledge Base với cơ chế **Keyword Fallback** (cho phép chạy ngay cả khi ChromaDB chưa sẵn sàng).
 - `get_ticket_info`: Truy vấn chi tiết Ticket P1.
 - `check_access_permission`: Kiểm định quyền hạn truy cập hệ thống theo roles.
@@ -69,6 +71,7 @@ Trong file `graph.py`, Supervisor route chính xác task "CS Refund" vào Policy
 ## 3. Kết quả grading questions (150–200 từ)
 
 > Sau khi chạy pipeline với grading_questions.json (public lúc 17:00):
+>
 > - Nhóm đạt bao nhiêu điểm raw?
 > - Câu nào pipeline xử lý tốt nhất?
 > - Câu nào pipeline fail hoặc gặp khó khăn?
@@ -76,9 +79,11 @@ Trong file `graph.py`, Supervisor route chính xác task "CS Refund" vào Policy
 **Tổng điểm raw ước tính:** 96 / 96
 
 **Câu pipeline xử lý tốt nhất:**
+
 - ID: **gq09** — Lý do tốt: Đây là câu hỏi multi-hop phức tạp yêu cầu cả thông tin P1 SLA và cấp quyền truy cập. Supervisor đã nhận diện đúng tính chất rủi ro khẩn cấp và route chính xác qua 2 worker (Policy -> Retrieval) để lấy đủ bằng chứng.
 
 **Câu pipeline fail hoặc partial:**
+
 - ID: **None** — Hiện tại hệ thống trả lời đúng hướng (routing) cho toàn bộ 10 câu hỏi trong tập chấm điểm chính thức.
 
 **Câu gq07 (abstain):** Nhóm đã thiết kế Synthesis worker để nhận diện khi dữ liệu truy xuất không đề cập đến "phạt tài chính" và trả về thông báo "Không tìm thấy thông tin cụ thể" thay vì bịa ra một con số phạt ngẫu nhiên.
@@ -107,7 +112,7 @@ Trong file `graph.py`, Supervisor route chính xác task "CS Refund" vào Policy
 
 | Thành viên | Phần đã làm | Sprint |
 |------------|-------------|--------|
-| | | |
+| Nguyễn Tuấn Kiệt | `synthesis.py`, worker testing script | 2 |
 | | | |
 | | | |
 | Nguyễn Duy Hưng | eval_trace.py, 2 doc templates: routing_decisions & single_vs_multi_comparison, group_report | 4 |
