@@ -37,6 +37,8 @@ def call_llm_policy_analysis(task: str, contexts: List[str]) -> Dict:
     system_prompt = """You are an internal Policy Analyst. 
 Your task is to check if the user's request violates any internal policies based on the provided documents.
 
+IMPORTANT: Respond in the same language as the provided context documents (primarily Vietnamese).
+
 EXCEPTIONS TO CHECK:
 1. Flash Sale: Flash Sale orders are NOT eligible for refunds.
 2. Digital Products/Services: License keys, subscriptions, and activated software are NOT eligible for refunds.
@@ -51,7 +53,7 @@ OUTPUT REQUIREMENTS (JSON):
     {"type": string, "rule": string, "source": string}
   ],
   "policy_version_note": string, (Notes on policy version if there is any temporal scoping issue)
-  "explanation": string (Brief explanation of the reasoning)
+  "explanation": string (Brief explanation in the same language as the documents)
 }"""
 
     context_str = "\n---\n".join(contexts)
