@@ -17,6 +17,10 @@ Gọi độc lập để test:
 """
 
 import os
+from dotenv import load_dotenv
+from typing import Any
+
+_ = load_dotenv()
 
 WORKER_NAME = "synthesis_worker"
 
@@ -31,13 +35,14 @@ Quy tắc nghiêm ngặt:
 """
 
 
-def _call_llm(messages: list) -> str:
+def _call_llm(messages: list[dict]) -> str:
     """
     Gọi LLM để tổng hợp câu trả lời.
     TODO Sprint 2: Implement với OpenAI hoặc Gemini.
     """
     # Option A: OpenAI
     try:
+        # print(f"test: {messages}")
         from openai import OpenAI
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         response = client.chat.completions.create(
@@ -46,9 +51,11 @@ def _call_llm(messages: list) -> str:
             temperature=0.1,  # Low temperature để grounded
             max_tokens=500,
         )
+        print("OpenAI run complete")
         return response.choices[0].message.content
-    except Exception:
-        pass
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
 
     # Option B: Gemini
     try:
@@ -58,8 +65,11 @@ def _call_llm(messages: list) -> str:
         combined = "\n".join([m["content"] for m in messages])
         response = model.generate_content(combined)
         return response.text
-    except Exception:
-        pass
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return str(e)
+        
 
     # Fallback: trả về message báo lỗi (không hallucinate)
     return "[SYNTHESIS ERROR] Không thể gọi LLM. Kiểm tra API key trong .env."
@@ -153,9 +163,9 @@ def run(state: dict) -> dict:
     """
     Worker entry point — gọi từ graph.py.
     """
-    task = state.get("task", "")
-    chunks = state.get("retrieved_chunks", [])
-    policy_result = state.get("policy_result", {})
+    task: str = state.get("task", "")
+    chunks: list[dict[str, Any]] = state.get("retrieved_chunks", [])
+    policy_result: dict[str, Any] = state.get("policy_result", {})
 
     state.setdefault("workers_called", [])
     state.setdefault("history", [])
