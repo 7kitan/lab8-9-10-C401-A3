@@ -3,7 +3,7 @@
 
 version: "1.0"
 dataset: "kb_chunk_export"
-owner_team: "__TODO__"
+owner_team: "C401-A3"
 
 schema_cleaned:
   chunk_id:
@@ -32,14 +32,21 @@ quality_rules:
   - id: "no_stale_refund_window"
     description: "Không được để chunk policy refund chứa cửa sổ 14 ngày (lệch so với v4 = 7 ngày)"
     severity: "halt"
+  - id: "no_html_tags"
+    description: "Không được chứa thẻ HTML trong nội dung"
+    severity: "halt"
+  - id: "unique_chunk_id"
+    description: "Đảm bảo ID của mỗi chunk là duy nhất"
+    severity: "halt"
+    
 
 freshness:
   measured_at: "publish"  # ingest | cleaned | publish
   sla_hours: 24
-  alert_channel: "__TODO__"
+  alert_channel: "c401-a3-monitoring@gmail.com"
 
 canonical_sources:
-  - path: "data/docs/policy_refund_v4.txt"
+  - path: "data/raw/policy_export_dirty_v2.csv"
     doc_id: "policy_refund_v4"
   - path: "data/docs/sla_p1_2026.txt"
     doc_id: "sla_p1_2026"

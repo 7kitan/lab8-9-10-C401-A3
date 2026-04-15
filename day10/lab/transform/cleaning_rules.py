@@ -89,6 +89,9 @@ def clean_rows(
         eff_raw = raw.get("effective_date", "")
         exported_at = raw.get("exported_at", "")
 
+        # Normalize doc_id (Rule for Sprint 2)
+        doc_id = (doc_id or "").strip().lower()
+
         if doc_id not in ALLOWED_DOC_IDS:
             quarantine.append({**raw, "reason": "unknown_doc_id"})
             continue
@@ -129,6 +132,40 @@ def clean_rows(
                     "7 ngày làm việc",
                 )
                 fixed_text += " [cleaned: stale_refund_window]"
+
+        # --- SPRINT 2: NEW BUSINESS RULES ---
+        
+        # 1) Technical Clean: Strip HTML tags
+        if "<" in fixed_text and ">" in fixed_text:
+            fixed_text = re.sub(r'<[^>]+>', '', fixed_text).strip()
+            fixed_text += " [cleaned: html_tags]"
+
+        # 2) HR Policy Fixes
+        if doc_id == "hr_leave_policy":
+            if "20 ngày phép" in fixed_text:
+                fixed_text = fixed_text.replace("20 ngày phép", "15 ngày phép")
+                fixed_text += " [cleaned: no_stale_hr_leave_20d]"
+            if "trong 7 ngày" in fixed_text:
+                fixed_text = fixed_text.replace("trong 7 ngày", "ngay lập tức")
+                fixed_text += " [cleaned: no_stale_hr_offboarding_7d]"
+
+        # 3) IT Helpdesk Fixes
+        if doc_id == "it_helpdesk_faq":
+            if "IT Room tầng 4" in fixed_text:
+                fixed_text = fixed_text.replace("IT Room tầng 4", "IT Room tầng 3")
+                fixed_text += " [cleaned: no_stale_it_floor_4]"
+
+        # 4) SLA Fixes
+        if doc_id == "sla_p1_2026":
+            if "hòm thư 100GB" in fixed_text:
+                fixed_text = fixed_text.replace("hòm thư 100GB", "hòm thư 50GB")
+                fixed_text += " [cleaned: no_stale_mailbox_100gb]"
+            if "resolution P1 là 2 giờ" in fixed_text:
+                fixed_text = fixed_text.replace("resolution P1 là 2 giờ", "resolution P1 là 4 giờ")
+                fixed_text += " [cleaned: no_stale_sla_p1_2h]"
+        
+        fixed_text = fixed_text.strip()
+        # ------------------------------------
 
         seq += 1
         cleaned.append(

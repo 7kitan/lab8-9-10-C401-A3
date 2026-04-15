@@ -102,15 +102,24 @@ def run_expectations(cleaned_rows: List[Dict[str, Any]]) -> Tuple[List[Expectati
         if r.get("doc_id") == "hr_leave_policy"
         and "10 ngày phép năm" in (r.get("chunk_text") or "")
     ]
-    ok6 = len(bad_hr_annual) == 0
     results.append(
         ExpectationResult(
             "hr_leave_no_stale_10d_annual",
-            ok6,
+            len(bad_hr_annual) == 0,
             "halt",
             f"violations={len(bad_hr_annual)}",
         )
     )
+
+    # --- SPRINT 2: NEW TECHNICAL EXPECTATIONS ---
+
+    # E7: Technical - no html tags
+    html_found = [r for r in cleaned_rows if "<" in (r.get("chunk_text") or "") and ">" in (r.get("chunk_text") or "")]
+    results.append(ExpectationResult("no_html_tags", len(html_found) == 0, "halt", f"violations={len(html_found)}"))
+
+    # E8: Technical - unique chunk_id
+    all_ids = [r.get("chunk_id") for r in cleaned_rows if r.get("chunk_id")]
+    results.append(ExpectationResult("unique_chunk_id", len(all_ids) == len(set(all_ids)), "halt", f"total={len(all_ids)}"))
 
     halt = any(not r.passed and r.severity == "halt" for r in results)
     return results, halt
