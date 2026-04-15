@@ -88,7 +88,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         log("PIPELINE_HALT: expectation suite failed (halt).")
         return 2
     if halt and args.skip_validate:
-        log("WARN: expectation failed but --skip-validate → tiếp tục embed (chỉ dùng cho demo Sprint 3).")
+        log("WARN: expectation failed but --skip-validate -> tiep tuc embed (chi dung cho demo Sprint 3).")
 
     # Embed
     embed_ok = cmd_embed_internal(
@@ -118,11 +118,11 @@ def cmd_run(args: argparse.Namespace) -> int:
         "chroma_collection": os.environ.get("CHROMA_COLLECTION", "day10_kb"),
     }
     man_path = MAN_DIR / f"manifest_{run_id.replace(':', '-')}.json"
-    man_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    man_path.write_text(json.dumps(manifest, ensure_ascii=True, indent=2), encoding="utf-8")
     log(f"manifest_written={man_path.relative_to(ROOT)}")
 
     status, fdetail = check_manifest_freshness(man_path, sla_hours=float(os.environ.get("FRESHNESS_SLA_HOURS", "24")))
-    log(f"freshness_check={status} {json.dumps(fdetail, ensure_ascii=False)}")
+    log(f"freshness_check={status} {json.dumps(fdetail, ensure_ascii=True)}")
 
     log("PIPELINE_OK")
     return 0
