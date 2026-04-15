@@ -1,7 +1,7 @@
 """
 Kiểm tra freshness từ manifest pipeline (SLA đơn giản theo giờ).
 
-Sinh viên mở rộng: đọc watermark DB, so sánh với clock batch, v.v.
+TODO Sinh viên mở rộng: đọc watermark DB, so sánh với clock batch, v.v.
 """
 
 from __future__ import annotations

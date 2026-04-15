@@ -1,5 +1,5 @@
 # Data contract — Lab Day 10 (tiếp nối artifact CS + IT Helpdesk)
-# Sinh viên bổ sung owner, SLA freshness, và nguồn canonical.
+# TODO Sinh viên bổ sung owner, SLA freshness, và nguồn canonical.
 
 version: "1.0"
 dataset: "kb_chunk_export"
