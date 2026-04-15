@@ -1,0 +1,14 @@
+{
+  "run_id": "bad-run-v2",
+  "run_timestamp": "2026-04-15T14:15:29.302963+00:00",
+  "raw_path": "data/raw/policy_export_dirty_v2.csv",
+  "raw_records": 31,
+  "cleaned_records": 15,
+  "quarantine_records": 16,
+  "latest_exported_at": "2026-04-15T11:00:00",
+  "no_refund_fix": true,
+  "skipped_validate": true,
+  "cleaned_csv": "artifacts/cleaned/cleaned_bad-run-v2.csv",
+  "chroma_path": "./chroma_db",
+  "chroma_collection": "day10_kb"
+}
