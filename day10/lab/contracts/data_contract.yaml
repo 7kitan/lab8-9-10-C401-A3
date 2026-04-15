@@ -3,7 +3,8 @@
 
 version: "1.0"
 dataset: "kb_chunk_export"
-owner_team: "__TODO__"
+# TODO Sinh viên bổ sung owner, SLA freshness, và nguồn canonical.
+owner_team: "CS & IT Helpdesk Team"
 
 schema_cleaned:
   chunk_id:
@@ -32,11 +33,20 @@ quality_rules:
   - id: "no_stale_refund_window"
     description: "Không được để chunk policy refund chứa cửa sổ 14 ngày (lệch so với v4 = 7 ngày)"
     severity: "halt"
+  - id: "no_empty_exported_at"
+    description: "Tất cả cleaned row phải có exported_at (lineage / traceability)"
+    severity: "warn"
+  - id: "chunk_max_length_2000"
+    description: "Chunk text không được vượt 2000 ký tự (phát hiện chunk bị nối / corrupt)"
+    severity: "halt"
+  - id: "no_missing_exported_at_in_raw"
+    description: "Quarantine row nếu exported_at rỗng từ raw export"
+    severity: "quarantine"
 
 freshness:
   measured_at: "publish"  # ingest | cleaned | publish
   sla_hours: 24
-  alert_channel: "__TODO__"
+  alert_channel: "#data-pipeline-alerts (Slack)"
 
 canonical_sources:
   - path: "data/docs/policy_refund_v4.txt"

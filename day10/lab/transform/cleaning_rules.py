@@ -25,6 +25,10 @@ ALLOWED_DOC_IDS = frozenset(
 
 _ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _DMY_SLASH = re.compile(r"^(\d{2})/(\d{2})/(\d{4})$")
+_UNICODE_ZERO_WIDTH = re.compile(r'[\ufeff\u200b\u200c\u200d\u2060\ufffe]')
+_UNICODE_NBSP = re.compile(r'[\xa0\u2000-\u200a\u202f\u205f\u3000]')
+_ANNOTATION_PARENS = re.compile(r'\s*\(ghi chú:[^)]*\)')
+_ANNOTATION_BRACKETS = re.compile(r'\s*\[cleaned:[^\]]*\]')
 
 
 def _norm_text(s: str) -> str:
@@ -51,6 +55,20 @@ def _normalize_effective_date(raw: str) -> Tuple[str, str]:
         dd, mm, yyyy = m.group(1), m.group(2), m.group(3)
         return f"{yyyy}-{mm}-{dd}", ""
     return "", "invalid_effective_date_format"
+
+
+def _normalize_unicode(s: str) -> str:
+    """RULE NEW — Loại BOM / zero-width chars và chuẩn hoá NBSP sang ASCII space."""
+    s = _UNICODE_ZERO_WIDTH.sub('', s)
+    s = _UNICODE_NBSP.sub(' ', s)
+    return s
+
+
+def _strip_annotations(s: str) -> str:
+    """RULE NEW — Xoá annotation nội bộ (ghi chú migration, tag [cleaned:...]) khỏi text embed."""
+    s = _ANNOTATION_PARENS.sub('', s)
+    s = _ANNOTATION_BRACKETS.sub('', s)
+    return s.strip()
 
 
 def load_raw_csv(path: Path) -> List[Dict[str, str]]:
@@ -115,13 +133,19 @@ def clean_rows(
             quarantine.append({**raw, "reason": "missing_chunk_text"})
             continue
 
+        # — RULE NEW: quarantine nếu exported_at rỗng (traceability / data lineage) —
+        if not exported_at:
+            quarantine.append({**raw, "reason": "missing_exported_at"})
+            continue
+
         key = _norm_text(text)
         if key in seen_text:
             quarantine.append({**raw, "reason": "duplicate_chunk_text"})
             continue
         seen_text.add(key)
 
-        fixed_text = text
+        # — RULE NEW: chuẩn hoá Unicode (BOM, zero-width, NBSP) —
+        fixed_text = _normalize_unicode(text)
         if apply_refund_window_fix and doc_id == "policy_refund_v4":
             if "14 ngày làm việc" in fixed_text:
                 fixed_text = fixed_text.replace(
@@ -129,6 +153,9 @@ def clean_rows(
                     "7 ngày làm việc",
                 )
                 fixed_text += " [cleaned: stale_refund_window]"
+
+        # — RULE NEW: loại annotation metadata khỏi nội dung chunk —
+        fixed_text = _strip_annotations(fixed_text)
 
         seq += 1
         cleaned.append(

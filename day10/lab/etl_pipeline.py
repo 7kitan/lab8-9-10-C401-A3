@@ -25,7 +25,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from monitoring.freshness_check import check_manifest_freshness
+from monitoring.freshness_check import check_ingest_publish_lag, check_manifest_freshness
 from quality.expectations import run_expectations
 from transform.cleaning_rules import clean_rows, load_raw_csv, write_cleaned_csv, write_quarantine_csv
 
@@ -123,6 +123,10 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     status, fdetail = check_manifest_freshness(man_path, sla_hours=float(os.environ.get("FRESHNESS_SLA_HOURS", "24")))
     log(f"freshness_check={status} {json.dumps(fdetail, ensure_ascii=False)}")
+
+    # — 2-boundary freshness: ingest → publish lag —
+    lag_status, lag_detail = check_ingest_publish_lag(man_path)
+    log(f"ingest_publish_lag={lag_status} {json.dumps(lag_detail, ensure_ascii=False)}")
 
     log("PIPELINE_OK")
     return 0

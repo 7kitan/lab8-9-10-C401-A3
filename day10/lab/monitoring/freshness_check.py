@@ -57,3 +57,43 @@ def check_manifest_freshness(
     if age_hours <= sla_hours:
         return "PASS", detail
     return "FAIL", {**detail, "reason": "freshness_sla_exceeded"}
+
+
+def check_ingest_publish_lag(
+    manifest_path: Path,
+    *,
+    lag_warn_hours: float = 12.0,
+) -> Tuple[str, Dict[str, Any]]:
+    """
+    TODO Sinh viên mở rộng: đọc watermark DB, so sánh với clock batch, v.v.
+
+    Đo lag giữa thời điểm data được export (ingest boundary)
+    và thời điểm pipeline chạy (publish boundary).
+    Trả về ("OK" | "WARN", detail).
+    """
+    if not manifest_path.is_file():
+        return "FAIL", {"reason": "manifest_missing", "path": str(manifest_path)}
+
+    data: Dict[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
+    exported = parse_iso(str(data.get("latest_exported_at", "")))
+    run_ts = parse_iso(str(data.get("run_timestamp", "")))
+
+    if not exported or not run_ts:
+        return "WARN", {
+            "reason": "missing_timestamps_for_lag",
+            "latest_exported_at": data.get("latest_exported_at"),
+            "run_timestamp": data.get("run_timestamp"),
+        }
+
+    lag_hours = (run_ts - exported).total_seconds() / 3600.0
+    detail: Dict[str, Any] = {
+        "latest_exported_at": data.get("latest_exported_at"),
+        "run_timestamp": data.get("run_timestamp"),
+        "ingest_publish_lag_hours": round(lag_hours, 3),
+        "lag_warn_hours": lag_warn_hours,
+    }
+    if lag_hours < 0:
+        return "WARN", {**detail, "reason": "exported_at_after_run_timestamp"}
+    if lag_hours > lag_warn_hours:
+        return "WARN", {**detail, "reason": "high_ingest_publish_lag"}
+    return "OK", detail

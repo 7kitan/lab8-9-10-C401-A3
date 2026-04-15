@@ -112,5 +112,29 @@ def run_expectations(cleaned_rows: List[Dict[str, Any]]) -> Tuple[List[Expectati
         )
     )
 
+    # — EXPECTATION NEW: E7 — exported_at không rỗng (lineage / trace) —
+    bad_export = [r for r in cleaned_rows if not (r.get("exported_at") or "").strip()]
+    ok7 = len(bad_export) == 0
+    results.append(
+        ExpectationResult(
+            "no_empty_exported_at",
+            ok7,
+            "warn",
+            f"empty_exported_at_count={len(bad_export)}",
+        )
+    )
+
+    # — EXPECTATION NEW: E8 — chunk_text không quá dài (phát hiện chunk bị nối / corrupt) —
+    too_long = [r for r in cleaned_rows if len(r.get("chunk_text") or "") > 2000]
+    ok8 = len(too_long) == 0
+    results.append(
+        ExpectationResult(
+            "chunk_max_length_2000",
+            ok8,
+            "halt",
+            f"too_long_chunks={len(too_long)}",
+        )
+    )
+
     halt = any(not r.passed and r.severity == "halt" for r in results)
     return results, halt
